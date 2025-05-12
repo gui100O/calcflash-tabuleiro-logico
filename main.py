@@ -1,0 +1,14 @@
+import pygame
+
+display = pygame.display.set_mode((1280,720))
+loop = True
+
+while loop:
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            loop = False
+
+    display.fill((187,173, 160))
+    pygame.display.flip()
+pygame.quit()

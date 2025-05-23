@@ -44,18 +44,21 @@ A cada 3 movimentos, o jogador deve responder a uma questão matemática para co
 2. Instale as dependências:
    ```bash
    pip install pygame pygame_gui
-3. Execute o jogo:
+Execute o jogo:
+
+bash
+Copiar
+Editar
 python calcflash.py
-
-
 Estrutura geral do código
+bash
+Copiar
+Editar
 CalcFlash/
 │
 ├── calcflash.py         # Controle geral do jogo e interface
 ├── game_logic.py        # Lógica de movimentação e combinação das peças
 └── quest_gen.py         # Geração das questões matemáticas
-
-
 Controles
 Setas do teclado: mover peças (esquerda, direita, cima, baixo)
 
@@ -72,5 +75,3 @@ Adicionar níveis de dificuldade configuráveis.
 
 Melhorar a interface gráfica.
 
-Autor
-Guilherme

@@ -1,4 +1,4 @@
-# calcflash_game.py (com lógica: 1 questão a cada 3 movimentos)
+# calcflash_game.py (versão visualmente melhorada)
 
 import pygame
 import pygame_gui
@@ -13,14 +13,14 @@ TILE_SIZE = 100
 GRID_SIZE = 4
 MARGIN = 10
 
-# Cores
+# Cores modernas e suaves
 WHITE = (255, 255, 255)
-GRAY = (220, 220, 220)
 BLACK = (30, 30, 30)
-BLUE = (50, 100, 200)
-LIGHT_BLUE = (200, 230, 255)
+SHADOW_COLOR = (200, 210, 230)
+BLUE = (52, 120, 246)
+LIGHT_BLUE = (220, 235, 255)
 RED = (220, 50, 50)
-BACKGROUND_COLOR = (245, 250, 255)
+BACKGROUND_COLOR = (235, 240, 255)
 
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -28,11 +28,11 @@ pygame.display.set_caption("CalcFlash: Tabuleiro Lógico")
 clock = pygame.time.Clock()
 manager = pygame_gui.UIManager((WIDTH, HEIGHT))
 
-# Fontes
-font = pygame.font.SysFont('Arial', 42)
-input_font = pygame.font.SysFont('Arial', 24, bold=True)
-question_font = pygame.font.SysFont('Arial', 28, bold=True)
-status_font = pygame.font.SysFont('Arial', 24, bold=True)
+# Fontes modernas
+font = pygame.font.SysFont('segoeui', 42, bold=True)
+input_font = pygame.font.SysFont('segoeui', 24)
+question_font = pygame.font.SysFont('segoeui', 28, bold=True)
+status_font = pygame.font.SysFont('segoeui', 24)
 
 # Estados do jogo
 MENU, JOGO, PERGUNTA, RECUPERACAO, FIM = range(5)
@@ -47,7 +47,7 @@ question_text = ""
 correct_answer = ""
 pending_points = 0
 recovery_streak = 0
-move_counter = 0  # Novo: contador de movimentos
+move_counter = 0
 
 # Botões
 start_button = pygame_gui.elements.UIButton(pygame.Rect((WIDTH//2 - 110, 300), (220, 70)), 'Iniciar Jogo', manager)
@@ -60,15 +60,30 @@ pygame.draw.polygon(life_icon, RED, [(15, 28), (28, 15), (28, 6), (24, 2), (15, 
 pygame.draw.circle(life_icon, RED, (9, 9), 8)
 pygame.draw.circle(life_icon, RED, (21, 9), 8)
 
+def get_tile_color(value):
+    color_map = {
+        2: (230, 245, 255),
+        4: (210, 235, 255),
+        8: (180, 220, 255),
+        16: (150, 200, 255),
+        32: (120, 180, 255),
+        64: (90, 160, 255),
+        128: (70, 140, 255),
+        256: (60, 120, 240),
+        512: (50, 100, 220),
+        1024: (40, 80, 200),
+        2048: (30, 60, 180),
+    }
+    return color_map.get(value, (20, 50, 160))
+
 def draw_grid():
     screen.fill(BACKGROUND_COLOR)
-    
+
     grid_width = GRID_SIZE * TILE_SIZE + (GRID_SIZE + 1) * MARGIN
     start_x = (WIDTH - grid_width) // 2
 
     current_y = 10
 
-    # Vidas centralizadas
     total_lives_width = lives * 34 - 10
     lives_x = (WIDTH - total_lives_width) // 2
     for i in range(lives):
@@ -76,14 +91,12 @@ def draw_grid():
 
     current_y += 40
 
-    # Pontuação
     score_text = status_font.render(f"Pontuação: {score}", True, BLACK)
     score_rect = score_text.get_rect(center=(WIDTH // 2, current_y))
     screen.blit(score_text, score_rect)
 
     current_y += 40
 
-    # Questão
     if state in [PERGUNTA, RECUPERACAO]:
         question_surf = question_font.render(question_text, True, BLUE)
         question_rect = question_surf.get_rect(center=(WIDTH // 2, current_y + 20))
@@ -99,7 +112,6 @@ def draw_grid():
 
         current_y = question_rect.bottom + 20
 
-        # Resposta
         answer_surf = input_font.render(f"Resposta: {user_answer}", True, BLACK)
         answer_rect = answer_surf.get_rect(center=(WIDTH // 2, current_y))
         screen.blit(answer_surf, answer_rect)
@@ -109,14 +121,14 @@ def draw_grid():
     else:
         current_y += 20
 
-    # Grid
     for row in range(GRID_SIZE):
         for col in range(GRID_SIZE):
             value = grid[row][col]
             rect_x = start_x + col * (TILE_SIZE + MARGIN) + MARGIN
             rect_y = current_y + row * (TILE_SIZE + MARGIN) + MARGIN
             rect = pygame.Rect(rect_x, rect_y, TILE_SIZE, TILE_SIZE)
-            pygame.draw.rect(screen, LIGHT_BLUE if value == 0 else GRAY, rect, border_radius=12)
+            pygame.draw.rect(screen, SHADOW_COLOR, rect.inflate(4, 4), border_radius=12)
+            pygame.draw.rect(screen, LIGHT_BLUE if value == 0 else get_tile_color(value), rect, border_radius=12)
             if value != 0:
                 val_surf = font.render(str(value), True, BLACK)
                 val_rect = val_surf.get_rect(center=rect.center)
@@ -153,9 +165,10 @@ while running:
 
     if state == MENU:
         screen.fill(BACKGROUND_COLOR)
-        title_font = pygame.font.SysFont('Arial', 64, bold=True)
+        title_font = pygame.font.SysFont('segoeui', 64, bold=True)
         title_text = title_font.render("CalcFlash!", True, BLUE)
         title_rect = title_text.get_rect(center=(WIDTH // 2, 150))
+        pygame.draw.rect(screen, WHITE, title_rect.inflate(40, 20), border_radius=16)
         screen.blit(title_text, title_rect)
         manager.update(time_delta)
         manager.draw_ui(screen)
@@ -165,7 +178,7 @@ while running:
 
     elif state == FIM:
         screen.fill(BACKGROUND_COLOR)
-        over_font = pygame.font.SysFont('Arial', 64, bold=True)
+        over_font = pygame.font.SysFont('segoeui', 64, bold=True)
         game_over = over_font.render("Fim de Jogo!", True, RED)
         game_over_rect = game_over.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 100))
         screen.blit(game_over, game_over_rect)

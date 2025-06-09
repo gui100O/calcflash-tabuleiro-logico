@@ -22,6 +22,7 @@ LIGHT_GRAY = (60, 60, 60)            # Caixa de instruções
 BUTTON_COLOR = (43, 45, 42)          # Botão escuro
 TITLE_COLOR = (255, 255, 255)        # Título branco
 QUESTION_BOX_COLOR = (0, 0, 0)       # Caixa de pergunta escura
+HEART_COLOR = (220, 40, 70)          # Vermelho do coração
 
 COLOR_MAP = {
     0: (205, 205, 205),
@@ -48,7 +49,7 @@ small_font = pygame.font.SysFont('segoeui', 20)
 MENU = 'menu'
 NORMAL = 'normal'
 PERGUNTA = 'pergunta'
-GAME_OVER = 'game_over'  # Novo estado para Game Over
+GAME_OVER = 'game_over'
 state = MENU
 
 grid = [[0] * GRID_SIZE for _ in range(GRID_SIZE)]
@@ -123,11 +124,25 @@ def draw_grid(start_y):
                 text = font.render(str(val), True, text_color)
                 screen.blit(text, text.get_rect(center=rect.center))
 
+def draw_heart(surface, x, y, size):
+    """Desenha um coração usando dois círculos e um triângulo."""
+    top_offset = size // 4
+    radius = size // 4
+    # Dois círculos
+    pygame.draw.circle(surface, HEART_COLOR, (x + radius, y + radius + top_offset), radius)
+    pygame.draw.circle(surface, HEART_COLOR, (x + 3 * radius, y + radius + top_offset), radius)
+    # Triângulo
+    points = [
+        (x, y + radius + top_offset),
+        (x + size, y + radius + top_offset),
+        (x + size // 2, y + size)
+    ]
+    pygame.draw.polygon(surface, HEART_COLOR, points)
+
 def draw_top():
     # Limpar topo
     pygame.draw.rect(screen, BACKGROUND_COLOR, (0, 0, WIDTH, 200))
 
-    # Textos centralizados, empilhados verticalmente, com espaçamento
     spacing = 10
     y = 20
 
@@ -143,12 +158,18 @@ def draw_top():
     screen.blit(points_text, points_rect)
     y += points_text.get_height() + spacing
 
-    # Vidas
-    lives_text = small_font.render(f"Vidas: {lives}", True, TITLE_COLOR)
-    lives_rect = lives_text.get_rect(center=(WIDTH // 2, y + lives_text.get_height() // 2))
-    screen.blit(lives_text, lives_rect)
+    # Vidas em corações
+    heart_size = 32
+    spacing_hearts = 10
+    total_width = lives * heart_size + (lives - 1) * spacing_hearts if lives > 0 else 0
+    start_x = WIDTH // 2 - total_width // 2
+    heart_y = y + 5
 
-    return y + lives_text.get_height()  # posição final após vidas para colocar caixa pergunta
+    for i in range(lives):
+        draw_heart(screen, start_x + i * (heart_size + spacing_hearts), heart_y, heart_size)
+
+    y = heart_y + heart_size
+    return y  # posição final após vidas para colocar caixa pergunta
 
 def draw_question_box(top_y):
     box_y = top_y + 15  # espaço entre vida e caixa pergunta
@@ -275,7 +296,7 @@ while running:
                     else:
                         lives -= 1
                         if lives <= 0:
-                            state = GAME_OVER  # Vai para tela de Game Over
+                            state = GAME_OVER
                         else:
                             state = NORMAL
                     user_answer = ''

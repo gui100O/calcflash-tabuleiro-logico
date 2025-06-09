@@ -21,8 +21,7 @@ GRAY = (150, 150, 150)
 LIGHT_GRAY = (60, 60, 60)            # Caixa de instruções
 BUTTON_COLOR = (43, 45, 42)          # Botão escuro
 TITLE_COLOR = (255, 255, 255)        # Título branco
-QUESTION_BOX_COLOR = (0, 0, 0)    # Caixa de pergunta escura
-
+QUESTION_BOX_COLOR = (0, 0, 0)       # Caixa de pergunta escura
 
 COLOR_MAP = {
     0: (205, 205, 205),
@@ -49,6 +48,7 @@ small_font = pygame.font.SysFont('segoeui', 20)
 MENU = 'menu'
 NORMAL = 'normal'
 PERGUNTA = 'pergunta'
+GAME_OVER = 'game_over'  # Novo estado para Game Over
 state = MENU
 
 grid = [[0] * GRID_SIZE for _ in range(GRID_SIZE)]
@@ -62,10 +62,15 @@ move_counter = 0
 
 start_button = pygame.Rect(WIDTH // 2 - 100, HEIGHT // 2 + 40, 200, 50)
 
+# --- Carregar imagem de fundo para Game Over (opcional) ---
+try:
+    fundo = pygame.image.load("fundo.jpg")
+    fundo = pygame.transform.scale(fundo, (WIDTH, HEIGHT))
+except Exception:
+    fundo = None
 
 def get_tile_color(value):
     return COLOR_MAP.get(value, COLOR_MAP[0])
-
 
 def draw_menu():
     screen.fill(BACKGROUND_COLOR)
@@ -102,8 +107,6 @@ def draw_menu():
     button_text = small_font.render("Iniciar jogo", True, WHITE)
     screen.blit(button_text, button_text.get_rect(center=start_button.center))
 
-
-
 def draw_grid(start_y):
     total_grid_width = GRID_SIZE * TILE_SIZE + (GRID_SIZE - 1) * MARGIN
     start_x = (WIDTH - total_grid_width) // 2  # centraliza horizontalmente
@@ -119,8 +122,6 @@ def draw_grid(start_y):
                 text_color = BLACK if val <= 4 else WHITE
                 text = font.render(str(val), True, text_color)
                 screen.blit(text, text.get_rect(center=rect.center))
-
-
 
 def draw_top():
     # Limpar topo
@@ -148,7 +149,6 @@ def draw_top():
     screen.blit(lives_text, lives_rect)
 
     return y + lives_text.get_height()  # posição final após vidas para colocar caixa pergunta
-
 
 def draw_question_box(top_y):
     box_y = top_y + 15  # espaço entre vida e caixa pergunta
@@ -179,13 +179,42 @@ def draw_question_box(top_y):
 
     return box_rect.bottom  # retorno a posição y logo abaixo da caixa
 
+def draw_game_over():
+    # Fundo estilizado
+    if fundo:
+        screen.blit(fundo, (0, 0))
+    else:
+        screen.fill(BACKGROUND_COLOR)
+
+    # Overlay escuro translúcido
+    overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 180))
+    screen.blit(overlay, (0, 0))
+
+    # Texto "GAME OVER"
+    red = (255, 0, 0)
+    fonte_go = pygame.font.SysFont(None, 120, bold=True)
+    texto_go = fonte_go.render("GAME OVER", True, red)
+    texto_rect = texto_go.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 60))
+    screen.blit(texto_go, texto_rect)
+
+    # Pontuação final
+    pontuacao_txt = font.render(f"Pontuação: {score}", True, WHITE)
+    pontuacao_rect = pontuacao_txt.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 20))
+    screen.blit(pontuacao_txt, pontuacao_rect)
+
+    # Botão "Jogar Novamente"
+    retry_button = pygame.Rect(WIDTH // 2 - 100, HEIGHT // 2 + 80, 200, 60)
+    pygame.draw.rect(screen, BUTTON_COLOR, retry_button, border_radius=10)
+    retry_text = small_font.render("Jogar Novamente", True, WHITE)
+    screen.blit(retry_text, retry_text.get_rect(center=retry_button.center))
+    return retry_button
 
 def spawn_tile():
     empty = [(r, c) for r in range(GRID_SIZE) for c in range(GRID_SIZE) if grid[r][c] == 0]
     if empty:
         r, c = random.choice(empty)
         grid[r][c] = 2 if random.random() < 0.9 else 4
-
 
 def reset_game():
     global grid, score, lives, level, user_answer, state, question_text, correct_answer, move_counter
@@ -200,10 +229,11 @@ def reset_game():
     spawn_tile()
     question_text, correct_answer = generate_question(level)
 
-
 # --- Loop Principal ---
 running = True
 clock = pygame.time.Clock()
+retry_button = None  # Para capturar o botão de retry na tela de Game Over
+
 while running:
     screen.fill(BACKGROUND_COLOR)
 
@@ -244,7 +274,10 @@ while running:
                         state = NORMAL
                     else:
                         lives -= 1
-                        state = MENU if lives <= 0 else NORMAL
+                        if lives <= 0:
+                            state = GAME_OVER  # Vai para tela de Game Over
+                        else:
+                            state = NORMAL
                     user_answer = ''
                     question_text, correct_answer = generate_question(level)
                 elif event.key == pygame.K_BACKSPACE:
@@ -252,9 +285,16 @@ while running:
                 elif event.unicode.isdigit() or event.unicode.lower() in ['s', 'n']:
                     user_answer += event.unicode
 
+        elif state == GAME_OVER:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if retry_button and retry_button.collidepoint(event.pos):
+                    reset_game()
+
     # Desenho separado da lógica
     if state == MENU:
         draw_menu()
+    elif state == GAME_OVER:
+        retry_button = draw_game_over()
     else:
         bottom_of_lives = draw_top()  # posição logo abaixo da vida
         if state == PERGUNTA:
